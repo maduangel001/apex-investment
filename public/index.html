@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apex Investment | Portfolio</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+
+body{
+    background: linear-gradient(135deg,#0c0f14,#121826);
+    color:#e5e7eb;
+}
+
+/* NAV */
+nav{
+    display:flex;justify-content:space-between;
+    padding:20px 60px;background:#0b0e13;
+    border-bottom:1px solid #1f2937;
+}
+nav h1{color:#22c55e;}
+nav button{background:#22c55e;border:none;padding:10px 18px;border-radius:6px;cursor:pointer;}
+
+/* HERO */
+.hero{text-align:center;padding:60px 20px;}
+.hero h2{font-size:36px;margin-bottom:10px;}
+.hero p{color:#9ca3af;}
+
+/* DASHBOARD */
+.dashboard{
+    padding:40px 20px;
+    text-align:center;
+}
+.balance{
+    font-size:32px;
+    margin-bottom:20px;
+}
+.actions button{
+    margin:10px;
+    padding:12px 20px;
+    border:none;
+    background:#22c55e;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+/* CARDS */
+.container{
+    display:flex;justify-content:center;gap:30px;
+    padding:40px 20px;flex-wrap:wrap;
+}
+.card{
+    background:#111827;padding:25px;border-radius:12px;width:280px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.4);transition:0.3s;
+}
+.card:hover{transform:translateY(-10px);}
+.card h3{color:#22c55e;}
+.card button{
+    width:100%;padding:10px;border:none;border-radius:6px;
+    background:#22c55e;cursor:pointer;font-weight:bold;
+}
+
+/* TESTIMONIALS */
+.testimonials{
+    padding:60px 20px;text-align:center;
+}
+.testimonial-box{
+    background:#111827;margin:15px auto;
+    padding:20px;border-radius:10px;max-width:500px;
+}
+
+/* WHATSAPP */
+.whatsapp{
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    background:#25D366;
+    padding:15px;
+    border-radius:50%;
+    cursor:pointer;
+}
+
+/* ADMIN */
+.admin{
+    padding:30px;text-align:center;
+}
+.admin input{
+    padding:10px;margin:5px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- NAV -->
+<nav>
+    <h1>Apex Investment</h1>
+    <button onclick="scrollToTiers()">View Plans</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <h2>Institutional Crypto Investment Portfolio</h2>
+    <p>Managed by James Alfred — Advanced arbitrage & liquidity systems.</p>
+</section>
+
+<!-- DASHBOARD -->
+<section class="dashboard">
+    <h2>User Dashboard</h2>
+    <div class="balance">Balance: $<span id="balance">0</span></div>
+
+    <div class="actions">
+        <button onclick="deposit()">Deposit</button>
+        <button onclick="withdraw()">Withdraw</button>
+    </div>
+</section>
+
+<!-- TIERS -->
+<section class="container" id="tiers">
+
+<div class="card">
+<h3>Standard Tier</h3>
+<p>$200 – $1,999</p>
+<ul><li>12% – 15%</li></ul>
+<button onclick="selectTier('Standard')">Select</button>
+</div>
+
+<div class="card">
+<h3>Premium Tier</h3>
+<p>$2,000 – $9,999</p>
+<ul><li>18% – 22%</li></ul>
+<button onclick="selectTier('Premium')">Select</button>
+</div>
+
+<div class="card">
+<h3>Elite Tier</h3>
+<p>$10,000+</p>
+<ul><li>25%+</li></ul>
+<button onclick="selectTier('Elite')">Select</button>
+</div>
+
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+    <h2>Client Testimonials</h2>
+
+    <div class="testimonial-box">
+        “I earned 20% in one month — incredible system!”
+    </div>
+
+    <div class="testimonial-box">
+        “Very professional and reliable investment platform.”
+    </div>
+
+    <div class="testimonial-box">
+        “Best crypto portfolio manager I’ve seen.”
+    </div>
+</section>
+
+<!-- ADMIN PANEL -->
+<section class="admin">
+    <h2>Admin Panel</h2>
+    <input type="number" id="adminAmount" placeholder="Enter amount">
+    <button onclick="addFunds()">Add Funds</button>
+</section>
+
+<!-- CONTACT -->
+<section class="hero">
+    <h2>Contact</h2>
+    <p onclick="copyEmail()" style="cursor:pointer;color:#22c55e;">
+        maduangel081@gmail.com
+    </p>
+</section>
+
+<!-- WHATSAPP -->
+<div class="whatsapp" onclick="openWhatsApp()">💬</div>
+
+<footer style="text-align:center;padding:20px;">
+© 2026 Apex Investment
+</footer>
+
+<script>
+
+/* LOAD BALANCE FROM BACKEND */
+async function loadBalance(){
+    try{
+        let res = await fetch("/api/balance");
+        let data = await res.json();
+        document.getElementById("balance").innerText = data.balance;
+    }catch(err){
+        console.log("Error loading balance");
+    }
+}
+
+loadBalance();
+
+/* AUTO REFRESH EVERY 5 SECONDS */
+setInterval(loadBalance, 5000);
+
+/* SCROLL */
+function scrollToTiers(){
+    document.getElementById("tiers").scrollIntoView({behavior:"smooth"});
+}
+
+/* NAVIGATION */
+function deposit(){
+    window.location.href = "deposit.html";
+}
+
+function withdraw(){
+    window.location.href = "withdraw.html";
+}
+
+/* ADMIN ADD FUNDS (CONNECTED TO BACKEND) */
+async function addFunds(){
+    let amt = parseFloat(document.getElementById("adminAmount").value);
+
+    await fetch("/api/deposit", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ amount: amt })
+    });
+
+    loadBalance();
+}
+
+/* EMAIL */
+function copyEmail(){
+    navigator.clipboard.writeText("maduangel081@gmail.com");
+    alert("Copied!");
+}
+
+/* WHATSAPP */
+function openWhatsApp(){
+    window.open("https://wa.me/2348106592981");
+}
+
+</script>
+
+</body>
+</html>

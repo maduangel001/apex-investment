@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deposit | Apex Investment</title>
+
+<style>
+body{
+    background:#0c0f14;
+    color:white;
+    font-family:Arial;
+    text-align:center;
+    padding:40px;
+}
+
+.container{
+    background:#111827;
+    padding:30px;
+    border-radius:10px;
+    max-width:400px;
+    margin:auto;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    margin:15px 0;
+    border:none;
+    border-radius:6px;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    background:#22c55e;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.address{
+    background:#000;
+    padding:10px;
+    border-radius:6px;
+    word-break:break-all;
+    margin:10px 0;
+}
+
+/* LOADER */
+.loader{
+    display:none;
+    margin:30px auto;
+    border:6px solid #333;
+    border-top:6px solid #22c55e;
+    border-radius:50%;
+    width:60px;
+    height:60px;
+    animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+    0%{transform:rotate(0deg);}
+    100%{transform:rotate(360deg);}
+}
+
+.success{
+    display:none;
+    color:#22c55e;
+    font-size:22px;
+    margin-top:20px;
+}
+
+.timer{
+    margin-top:10px;
+    color:#9ca3af;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Deposit BTC</h2>
+
+    <p>Enter Amount ($)</p>
+    <input type="number" id="amount" placeholder="Enter amount">
+
+    <p>Send BTC to this address:</p>
+    <div class="address">
+        1De44bpURaK4zM2ekRW3CpuhkT2L1jZzsC
+    </div>
+
+    <button onclick="confirmPayment()">I have sent the money</button>
+
+    <!-- LOADER -->
+    <div class="loader" id="loader"></div>
+    <div class="timer" id="timer"></div>
+
+    <!-- SUCCESS -->
+    <div class="success" id="success">
+        ✔ Payment Completed
+    </div>
+</div>
+
+<script>
+async function confirmPayment(){
+    let amount = parseFloat(document.getElementById("amount").value);
+
+    if(isNaN(amount) || amount <= 0){
+        alert("Enter a valid amount");
+        return;
+    }
+
+    document.getElementById("loader").style.display = "block";
+
+    let timeLeft = 60;
+    let timerText = document.getElementById("timer");
+
+    let countdown = setInterval(() => {
+        timeLeft--;
+        timerText.innerText = "Processing payment... " + timeLeft + "s";
+
+        if(timeLeft <= 0){
+            clearInterval(countdown);
+
+            document.getElementById("loader").style.display = "none";
+            timerText.innerText = "";
+
+            // SEND DEPOSIT TO BACKEND
+            fetch("/api/deposit", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ amount: amount })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success){
+                    document.getElementById("success").style.display = "block";
+
+                    // REDIRECT AFTER 2 SECONDS
+                    setTimeout(() => {
+                        window.location.href = "index.html";
+                    }, 2000);
+                } else {
+                    alert("Deposit failed. Try again.");
+                }
+            })
+            .catch(err => {
+                alert("Error connecting to server.");
+                console.log(err);
+            });
+        }
+    }, 1000);
+}
+</script>
+
+</body>
+</html>

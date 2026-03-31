@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Withdraw | Apex Investment</title>
+
+<style>
+body{
+    background:#0c0f14;
+    color:white;
+    font-family:Arial;
+    text-align:center;
+    padding:40px;
+}
+
+.container{
+    background:#111827;
+    padding:30px;
+    border-radius:10px;
+    max-width:500px;
+    margin:auto;
+}
+
+select,input{
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border:none;
+    border-radius:6px;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    background:#22c55e;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.option{
+    margin-bottom:20px;
+    padding:15px;
+    background:#1f2937;
+    border-radius:8px;
+}
+
+.loader{
+    display:none;
+    margin:20px auto;
+    border:6px solid #333;
+    border-top:6px solid #22c55e;
+    border-radius:50%;
+    width:50px;
+    height:50px;
+    animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+    0%{transform:rotate(0deg);}
+    100%{transform:rotate(360deg);}
+}
+
+.success{
+    display:none;
+    color:#22c55e;
+    font-size:20px;
+    margin-top:15px;
+}
+
+.timer{
+    margin-top:10px;
+    color:#9ca3af;
+}
+
+.history{
+    margin-top:30px;
+    text-align:left;
+}
+
+.history-item{
+    background:#1f2937;
+    padding:10px;
+    margin:5px 0;
+    border-radius:6px;
+    font-size:14px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Withdraw Funds</h2>
+
+    <!-- BANK -->
+    <div class="option">
+        <h3>Bank Transfer</h3>
+
+        <input type="text" id="accountName" placeholder="Account Name">
+        <input type="text" id="iban" placeholder="Routing Number / IBAN">
+
+        <select id="bank">
+            <option>Select Bank</option>
+            <option>JPMorgan Chase (USA)</option>
+            <option>Bank of America (USA)</option>
+            <option>Wells Fargo (USA)</option>
+            <option>Citibank (USA)</option>
+            <option>Capital One (USA)</option>
+            <option>HSBC (UK)</option>
+            <option>Barclays (UK)</option>
+            <option>Lloyds Bank (UK)</option>
+            <option>NatWest (UK)</option>
+            <option>Standard Chartered (UK)</option>
+        </select>
+
+        <input type="number" id="bankAmount" placeholder="Enter amount">
+        <button onclick="withdrawBank()">Withdraw</button>
+    </div>
+
+    <!-- BTC -->
+    <div class="option">
+        <h3>BTC Withdrawal</h3>
+
+        <input type="text" id="btcAddress" placeholder="Enter BTC address">
+        <input type="number" id="btcAmount" placeholder="Enter amount">
+
+        <button onclick="withdrawBTC()">Withdraw</button>
+    </div>
+
+    <!-- LOADER -->
+    <div class="loader" id="loader"></div>
+    <div class="timer" id="timer"></div>
+
+    <!-- SUCCESS -->
+    <div class="success" id="success">
+        ✔ Request Submitted (Pending Approval)
+    </div>
+
+    <!-- HISTORY -->
+    <div class="history">
+        <h3>Withdrawal History</h3>
+        <div id="historyList"></div>
+    </div>
+</div>
+
+<script>
+
+/* SUBMIT WITHDRAWAL */
+async function submitWithdrawal(data){
+    document.getElementById("loader").style.display = "block";
+
+    let timeLeft = 30;
+    let timerText = document.getElementById("timer");
+
+    let countdown = setInterval(() => {
+        timeLeft--;
+        timerText.innerText = "Processing withdrawal... " + timeLeft + "s";
+
+        if(timeLeft <= 0){
+            clearInterval(countdown);
+
+            document.getElementById("loader").style.display = "none";
+            timerText.innerText = "";
+
+            fetch("/api/withdraw", {
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(res => {
+                document.getElementById("success").style.display = "block";
+                loadWithdrawals();
+
+                setTimeout(()=>{
+                    window.location.href = "index.html";
+                },2000);
+            });
+        }
+    },1000);
+}
+
+/* BANK */
+function withdrawBank(){
+    let amount = parseFloat(document.getElementById("bankAmount").value);
+    let bank = document.getElementById("bank").value;
+    let name = document.getElementById("accountName").value;
+    let iban = document.getElementById("iban").value;
+
+    if(bank === "Select Bank" || !name || !iban){
+        alert("Fill all bank details");
+        return;
+    }
+
+    submitWithdrawal({
+        type:"bank",
+        bank,
+        accountName:name,
+        iban,
+        amount
+    });
+}
+
+/* BTC */
+function withdrawBTC(){
+    let amount = parseFloat(document.getElementById("btcAmount").value);
+    let address = document.getElementById("btcAddress").value;
+
+    if(address.length < 10){
+        alert("Enter valid BTC address");
+        return;
+    }
+
+    submitWithdrawal({
+        type:"btc",
+        address,
+        amount
+    });
+}
+
+/* LOAD WITHDRAWALS */
+async function loadWithdrawals(){
+    let res = await fetch("/api/withdrawals");
+    let data = await res.json();
+
+    let list = document.getElementById("historyList");
+    list.innerHTML = "";
+
+    data.forEach(tx => {
+        let div = document.createElement("div");
+        div.className = "history-item";
+
+        div.innerHTML = `
+            $${tx.amount} - ${tx.type.toUpperCase()} 
+            <br>Status: <b>${tx.status}</b>
+        `;
+
+        list.appendChild(div);
+    });
+}
+
+loadWithdrawals();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Dashboard</title>
+
+<style>
+body{background:#0c0f14;color:white;font-family:Arial;padding:30px;}
+.container{max-width:600px;margin:auto;}
+.card{background:#111827;padding:15px;margin:10px 0;border-radius:8px;}
+button{padding:8px 12px;background:#22c55e;border:none;color:white;cursor:pointer;}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Admin Dashboard</h2>
+
+    <div id="list"></div>
+</div>
+
+<script>
+
+const token = localStorage.getItem("adminToken");
+
+if(!token){
+    window.location.href = "admin-login.html";
+}
+
+/* LOAD WITHDRAWALS */
+async function load(){
+    let res = await fetch("/api/withdrawals");
+    let data = await res.json();
+
+    let list = document.getElementById("list");
+    list.innerHTML = "";
+
+    data.forEach(tx => {
+        let div = document.createElement("div");
+        div.className = "card";
+
+        div.innerHTML = `
+            <b>$${tx.amount}</b> - ${tx.method} <br>
+            Status: ${tx.status} <br><br>
+            ${tx.status === "Pending" ? `<button onclick="approve('${tx._id}')">Approve</button>` : ""}
+        `;
+
+        list.appendChild(div);
+    });
+}
+
+/* APPROVE */
+async function approve(id){
+    await fetch("/api/approve/" + id, {
+        method:"POST"
+    });
+
+    load();
+}
+
+load();
+
+</script>
+
+</body>
+</html>
